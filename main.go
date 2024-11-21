@@ -54,6 +54,7 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
+	_, _ = w.Write(resp)
 }
 
 // 2. Обработчик для отправки задачи на сервер:
@@ -69,6 +70,11 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 
 	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, ok := tasks[task.ID]; ok {
+		http.Error(w, "Задача уже есть в списке", http.StatusConflict)
 		return
 	}
 
@@ -105,15 +111,12 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	if _, ok := tasks[id]; !ok {
 		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, `{"error": "Задача не найдена"}`, http.StatusBadRequest)
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
 		return
 	}
 
 	delete(tasks, id)
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "Задача успешно удалена"}`))
-
 }
 
 func main() {
